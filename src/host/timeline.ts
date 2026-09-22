@@ -51,6 +51,8 @@ const systemPromptNodeSchema = z.object({
 }).strict()
 
 const requestRecordSchema = z.object({
+  billedInput: z.number().int().nonnegative().optional(),
+  billedOutput: z.number().int().nonnegative().optional(),
   turn: z.number().optional(),
   step: z.number().optional(),
   time: z.number(),
@@ -124,6 +126,22 @@ const currentSchema = z.object({
   total: z.number().int().nonnegative(),
 }).strict()
 
+const goalTokenSchema = z.object({
+  uncachedInputTokens: z.number().int().nonnegative(), outputTokens: z.number().int().nonnegative(),
+  cacheReadTokens: z.number().int().nonnegative(), cacheWriteTokens: z.number().int().nonnegative(),
+}).strict()
+const goalUsageSchema = z.object({
+  goalId: z.string().min(1), round: z.number().int().nonnegative(), usage: goalTokenSchema, composition: currentSchema,
+  current: currentSchema.nullable(), contextWindow: z.number().nullable(),
+  roundInput: z.number().int().nonnegative(), roundOutput: z.number().int().nonnegative(),
+  anchor: z.object({ prompt: z.number().int().nonnegative(), total: z.number().int().nonnegative() }).strict().nullable(),
+}).strict()
+const goalUsageStateSchema = goalUsageSchema.extend({
+  turn: z.number().int().nonnegative().nullable(), active: z.boolean(), rounds: z.array(requestRecordSchema),
+  lastSample: z.object({ turn: z.number().int().nonnegative(), step: z.number().int().nonnegative(),
+    usage: goalTokenSchema, composition: currentSchema }).strict().nullable(),
+})
+
 const costBucketsSchema = z.object({
   uncached: z.number().int().nonnegative(),
   cacheRead: z.number().int().nonnegative(),
@@ -194,6 +212,9 @@ const lastSchema = z.object({
  * `detailRev` (present ⟺ split).
  */
 export const contextTimelineSchema = z.object({
+  goalUsage: goalUsageSchema.optional(),
+  goalRounds: z.array(requestRecordSchema).optional(),
+  goalRoundId: z.string().optional(),
   ok: z.literal(true),
   unsupported: unsupportedSchema.optional(),
   model: z.string().optional(),
@@ -228,6 +249,7 @@ export const contextTimelineSchema = z.object({
  * plain-JSON precondition already enforces at write time.
  */
 const timelineStateSchema = z.object({
+  goalUsage: goalUsageStateSchema.optional(),
   surface: z.array(surfaceNodeSchema),
   sums: z.object({
     user: z.number().int().nonnegative(),
@@ -393,7 +415,8 @@ export function createContextTimelineDefinition(config: Config, slim: () => bool
     // rows refold from the log; the startup warm-up (backfill.ts) now probes
     // the `contextTimeline` row too, rebuilding idle sessions' rows instead
     // of orphaning the key.
-    stateVersion: 20,
+    // 21: explicit goal-round attribution and cumulative goal token accounting.
+    stateVersion: 21,
   }
   return definition
 }

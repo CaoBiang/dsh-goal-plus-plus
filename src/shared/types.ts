@@ -165,6 +165,9 @@ export interface PluginSettings {
 export type SettingsField = keyof PluginSettings
 
 export interface Snapshot {
+  goalUsage?: GoalUsage
+  goalRounds?: RequestRecord[]
+  goalRoundId?: string
   ok: boolean
   /**
    * The host's baseline-gate record, present ONLY when the running harness
@@ -303,6 +306,8 @@ export interface Snapshot {
  * client's latest-wins cursor.
  */
 export interface ContextTimelineDetail {
+  goalRounds?: RequestRecord[]
+  goalRoundId?: string
   rev: number
   /**
    * The slim wire head at the SAME fold cut as the collections: the
@@ -573,6 +578,9 @@ export interface SurfaceNode {
 
 /** One answered model call (a step); consecutive records of one turn form it. */
 export interface RequestRecord {
+  /** Goal-round billing totals; absent on ordinary context request records. */
+  billedInput?: number
+  billedOutput?: number
   turn?: number
   step?: number
   time: number
@@ -610,6 +618,20 @@ export interface RequestRecord {
    * sets it.
    */
   net?: number
+}
+
+export interface GoalUsage {
+  goalId: string
+  round: number
+  usage: TokenUsage
+  composition: Snapshot['current']
+  current: Snapshot['current'] | null
+  contextWindow: number | null
+  /** Latest round's billed input/output, including all its model calls. */
+  roundInput: number
+  roundOutput: number
+  /** The latest request's provider anchor for the current context. */
+  anchor: { prompt: number; total: number } | null
 }
 
 /** A notable context event (compaction, prune, injection, model switch). */

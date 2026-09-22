@@ -37,6 +37,7 @@ import { deriveEventMessage } from '@deepseek-ai/dsh-session'
 import { decodeKindOfBlock, decodeSpansOfStream, firstTokenTimeOfStream, isTokenChunk, replaceRangeOf } from './logShapes'
 import type { DecodeKind } from './logShapes'
 import { opsOfCall, parseCallArgs } from '../shared/fileOps'
+import { applyGoalUsage, goalUsageView, type GoalUsageState } from './goalUsage'
 
 /**
  * The runtime event envelope this fold consumes. The core
@@ -66,6 +67,7 @@ export interface TimelineEvent {
  */
 
 export interface TimelineState {
+  goalUsage?: GoalUsageState
   /** Model-visible surface, newest last. */
   surface: SurfaceNode[]
   sums: Record<Category, number>
@@ -798,6 +800,20 @@ function bumpToolTotals(timing: TimingTotals, name: string, ms: number): void {
 }
 
 export function applyTimeline(state: TimelineState, event: TimelineEvent, bounds: FoldBounds): TimelineState {
+  try {
+    const next = applyContextTimeline(state, event, bounds)
+    const goalUsage = applyGoalUsage(state.goalUsage, event, state, next, bounds.maxKeptTurns)
+    if (goalUsage === state.goalUsage) return next
+    const result = { ...next, detailRev: (next.detailRev ?? 0) + 1 }
+    if (goalUsage === undefined) delete result.goalUsage
+    else result.goalUsage = goalUsage
+    return result
+  } catch {
+    return state
+  }
+}
+
+function applyContextTimeline(state: TimelineState, event: TimelineEvent, bounds: FoldBounds): TimelineState {
   let st: TimelineState | undefined
   const ensure = (): TimelineState => st ??= {
     ...state,
@@ -1327,6 +1343,7 @@ function headFieldsOf(state: TimelineState): Snapshot {
   // envelope (system + tools) and the live surface.
   const result: Snapshot = {
     ok: true,
+    ...(state.goalUsage === undefined ? {} : { goalUsage: goalUsageView(state.goalUsage) }),
     ...(state.model !== undefined ? { model: state.model } : {}),
     ...(state.provider !== undefined ? { provider: state.provider } : {}),
     ...(state.contextWindow !== undefined ? { contextWindow: state.contextWindow } : {}),
@@ -1403,6 +1420,9 @@ function headFieldsOf(state: TimelineState): Snapshot {
  */
 function detailCollectionsOf(state: TimelineState, bounds: FoldBounds): Omit<ContextTimelineDetail, 'rev'> {
   const result: Omit<ContextTimelineDetail, 'rev'> = {
+    ...(state.goalUsage === undefined ? {} : {
+      goalRoundId: state.goalUsage.goalId, goalRounds: state.goalUsage.rounds.map(row => ({ ...row })),
+    }),
     requests: state.requests.map(r => ({ ...r })),
     events: state.events.map(e => ({ ...e })),
     nodes: [],
