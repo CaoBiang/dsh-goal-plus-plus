@@ -5,13 +5,17 @@ import { goalPageOf, selectGoalPage, subscribeContextFocus } from '../viewFocus'
 import { makeGoalTokens } from './goalTokens'
 import { makeGoalFiles } from './goalFiles'
 import { makeGoalView } from './goalView'
+import { makeGoalAgents } from './goalAgents'
+import { makeGoalDashboard } from './goalDashboard'
 
 export function makePluginView(
   kit: ViewKit, ContextView: ComponentType<ContextViewProps>, ctx: ClientCtx,
 ): (props: ContextViewProps) => ReactElement {
   const Tokens = makeGoalTokens(ctx, kit)
   const Files = makeGoalFiles(ctx, kit)
-  const GoalView = makeGoalView(kit, props => <><Files {...props} /><Tokens {...props} /></>)
+  const Agents = makeGoalAgents(ctx, kit)
+  const Dashboard = makeGoalDashboard(ctx, kit)
+  const GoalView = makeGoalView(kit, props => <><Files {...props} /><Tokens {...props} /><Agents {...props} /></>, Dashboard)
   const { t } = kit
   function Pages(props: ContextViewProps): ReactElement {
     const sessionId = props.sessionId ?? ''

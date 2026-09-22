@@ -5,9 +5,11 @@ import type { ViewKit } from '../viewkit'
 import { makeGoalControl } from './goalControl'
 import { makeGoalRetry } from './goalRetry'
 import { RingDetails } from './ringDetails'
+import type { GoalDashboardProps } from './goalDashboard'
 
 export function makeGoalView(
   kit: ViewKit, Tokens: ComponentType<SessionStandardProps & { goalId: string }>,
+  Dashboard?: ComponentType<GoalDashboardProps>,
 ): (props: SessionStandardProps) => ReactElement {
   const { t } = kit
   const GoalControl = makeGoalControl(kit)
@@ -52,6 +54,7 @@ export function makeGoalView(
             </div>
           </div>
           <p className="gp-objective">{goal.objective}</p>
+          {Dashboard && <Dashboard {...props} goal={goal} key={goal.id} />}
           {goal.phase === 'blocked' && <div className="gp-blocked">
             <strong>{t('goal.blockedReason')}</strong>
             <p>{goal.blockedReason ?? t('goal.reasonUnknown')}</p>

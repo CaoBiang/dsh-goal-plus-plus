@@ -42,7 +42,7 @@ test('failed detail fetch is retryable and the file card mounts on the goal subp
     return { ok: true, json: async () => ({ ok: true, value: { rev: 1, ...data } }) }
   })
   const kit = makeKit()
-  const View = makePluginView(kit, () => null, {} as ClientCtx)
+  const View = makePluginView(kit, () => null, { get: () => undefined } as unknown as ClientCtx)
   const m = await mount(h(View, { sessionId: 'goal-files', useProjection: key => key === 'goal'
     ? { goal: { id: 'g', objective: 'Change files', phase: 'active', revision: 1 } }
     : { ...data, fileOps: [], detailRev: 1 } }))
@@ -50,7 +50,7 @@ test('failed detail fetch is retryable and the file card mounts on the goal subp
     await until(() => text(m.container).includes(kit.t('goal.filesRetry')), 'retry missing')
     fail = false
     await click(query(m.container, '.gp-files button'))
-    await until(() => m.container.querySelector('.gp-file-delta') !== null, 'summary missing')
+    await until(() => m.container.querySelector('.gp-files .gp-file-delta') !== null, 'summary missing')
     await click(query(m.container, '.gp-files button'))
     assert.ok(document.querySelector('[role="dialog"] .gp-file-path'))
   } finally { await m.unmount(); resetTimelineDetailStores(); vi.unstubAllGlobals() }
