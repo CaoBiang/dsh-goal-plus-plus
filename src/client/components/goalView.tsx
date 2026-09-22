@@ -3,12 +3,14 @@ import { useGoalDetection } from '../goal'
 import type { SessionStandardProps } from '../services'
 import type { ViewKit } from '../viewkit'
 import { makeGoalCharts } from './goalCharts'
+import { makeGoalControl } from './goalControl'
 
 export function makeGoalView(
   kit: ViewKit, Tokens: ComponentType<SessionStandardProps & { goalId: string }>,
 ): (props: SessionStandardProps) => ReactElement {
   const { t } = kit
   const GoalCharts = makeGoalCharts(kit)
+  const GoalControl = makeGoalControl(kit)
   const date = (value: number | null): string => value === null || !Number.isFinite(new Date(value).getTime())
     ? '—' : new Date(value).toLocaleString()
   return function GoalView(props: SessionStandardProps): ReactElement {
@@ -37,6 +39,7 @@ export function makeGoalView(
             <span className="gp-status" data-phase={goal.phase} role="status">{t('goal.phase.' + goal.phase)}</span>
           </div>
           <p className="gp-objective">{goal.objective}</p>
+          <GoalControl sessionId={props.sessionId} goal={goal} key={JSON.stringify([props.sessionId, goal.id, goal.revision])} />
           {goal.phase === 'blocked' && <div className="gp-blocked">
             <strong>{t('goal.blockedReason')}</strong>
             <p>{goal.blockedReason ?? t('goal.reasonUnknown')}</p>

@@ -35,6 +35,7 @@ import { makeContextView } from './components/contextView'
 import { makePluginView } from './components/pluginView'
 import { makeContextJumpButton } from './components/contextJump'
 import { watchHistoryFaces } from './historyPage'
+import { watchGoalControl } from './goalControl'
 import { watchPlacement } from './placement'
 import { watchSidebarContextTab } from './sidebar'
 import { makeViewKit } from './viewkit'
@@ -83,6 +84,7 @@ function apply(ctx: ClientCtx): void {
   // harness that never composes the namespace never fires the callback and
   // the targeted fetches simply stay absent.
   watchHistoryFaces(ctx)
+  watchGoalControl(ctx)
   const settings = createContextSettings()
   const ContextView = makeContextView(ctx, kit, settings)
   const PluginView = makePluginView(kit, ContextView, ctx)

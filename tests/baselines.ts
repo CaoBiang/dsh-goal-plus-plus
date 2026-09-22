@@ -20,6 +20,8 @@ export type BaselineId = 'v0.1.2-rc.1' | 'v0.1.3-alpha.2' | 'v0.1.5-rc.1' | 'v0.
 
 /** The harness web half's client faces, as far as the compat probes consume them. */
 export interface ClientSeam {
+  /** Whether the native Goal Remote exposes process-local activation reads and events. */
+  goalActivation: boolean
   /** The durable-image loader method the browser cards ride. */
   imageFaceMethod: string
   /** MarkdownText's chrome prop the plugin must hand every markdown render. */
@@ -142,6 +144,7 @@ export const BASELINES: readonly Baseline[] = [
       'plan/mode', 'compaction/summary', 'compaction/prune', 'system/message',
     ],
     client: {
+      goalActivation: true,
       imageFaceMethod: 'imageUrl',
       markdownChrome: 'labels',
       platformModules: [
@@ -199,6 +202,7 @@ export const BASELINES: readonly Baseline[] = [
       'plan/mode', 'compaction/summary', 'compaction/prune',
     ],
     client: {
+      goalActivation: false,
       imageFaceMethod: 'imageUrl',
       markdownChrome: 'labels',
       platformModules: [
@@ -238,6 +242,7 @@ export const BASELINES: readonly Baseline[] = [
       'plan/mode', 'compaction/summary', 'compaction/prune',
     ],
     client: {
+      goalActivation: false,
       imageFaceMethod: 'imageUrl',
       markdownChrome: 'labels',
       platformModules: [
@@ -280,6 +285,7 @@ export const BASELINES: readonly Baseline[] = [
       'plan/mode', 'compaction/summary', 'compaction/prune', 'system/message',
     ],
     client: {
+      goalActivation: true,
       imageFaceMethod: 'imageUrl',
       markdownChrome: 'labels',
       platformModules: [

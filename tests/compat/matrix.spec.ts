@@ -80,6 +80,16 @@ describe.skipIf(reasons.length > 0)('compat matrix — real dsh sources per base
       }
     })
 
+    test('client: native goal controls retain CAS mutations and optional activation reads', () => {
+      const source = staging.dshShow(baseline.tag, 'packages/goal/goal/src/index.ts')
+      for (const needle of ["@Remote('pause')", "@Remote('resume')", 'pause(agent: Agent, ref: GoalRef)', 'resume(agent: Agent, ref: GoalRef)']) {
+        assert.ok(source.includes(needle), `${baseline.id}: missing goal control ${needle}`)
+      }
+      const liveActivation = baseline.client.goalActivation
+      assert.equal(source.includes("@Remote('get')"), liveActivation)
+      assert.equal(source.includes("'goal/activation-changed'"), liveActivation)
+    })
+
     test('host: all three projection values served through the wire', () => {
       assert.deepEqual(report.keys, ['contextActivity', 'contextHeaders', 'contextTimeline'])
     })

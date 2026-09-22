@@ -27,6 +27,10 @@ An absent value (`undefined`) means capability unavailable or still synchronizin
 
 The state map, round-usage ring, and grouped round strip derive only from this current snapshot. They show neither inferred state history nor per-round completion. Inconsistent counts suppress the ratio charts, and the strip is bounded to 40 ranges even for a very large host cap.
 
+The current-goal card offers **Pause / Start** through the optional native `remote.goals` namespace, passing the displayed goal ID and revision to the harness's compare-and-swap guard. Pause disarms automatic continuation; it does not cancel an already-running turn. Start resumes a paused or blocked goal, or rearms an active goal, while its round budget has capacity. Completed goals have no execution controls.
+
+On `0.1.5-rc.1+`, live `goals.get` reads and activation/reset events select the appropriate button; durable Active alone never proves that continuation is armed. The older supported lines expose mutation verbs but no live activation read, so an active goal offers both Pause and Start without guessing its activation. The host rejects invalid transitions. Missing capabilities or revision metadata disable controls, and failed, malformed, or timed-out requests show a retryable notice. State reads never automatically retry a mutation.
+
 ## Baseline gate
 
 The declared floor is enforced at runtime, not only documented. At startup the host resolves the running harness's version — first from the module tree the plugin is bound to, then from the `$DSH_HOME/profiles/node_modules` mirror — and compares it against `0.1.2-rc.1` (channel order: release > rc > beta > alpha):
