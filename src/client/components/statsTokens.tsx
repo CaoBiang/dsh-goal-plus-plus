@@ -22,10 +22,12 @@ import type { ViewKit } from '../viewkit'
 import { makeSliceList } from './sliceList'
 import type { SliceRow } from './sliceList'
 import type { DonutProps } from './donut'
+import { STATS_DONUT_SIZE } from './donut'
+import { RingDetails } from './ringDetails'
 
 const NO_USAGE: TokenUsage = { uncachedInputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 }
 
-export function makeStatsTokens(kit: ViewKit, Donut: (props: DonutProps) => ReactElement): (props: {
+export function makeStatsTokens(kit: ViewKit, Donut: (props: DonutProps) => ReactElement, compact = false): (props: {
   usage: TokenUsage | null
   current: Snapshot['current']
   breakdown: ContextBreakdown | null
@@ -57,24 +59,17 @@ export function makeStatsTokens(kit: ViewKit, Donut: (props: DonutProps) => Reac
       // card's convention); output alone is provider-exact.
       count: p.key === 'output' ? `${fmt(p.value)} · ${t('tokens.outputNote')}` : '≈' + fmt(p.value),
     }))
+    const ring = <Donut segments={shown} size={STATS_DONUT_SIZE}
+      centerTop={props.usage === null ? '—' : fmt(total)} centerSub={t('tokens.total')}
+      hoverKey={hoverKey} onHoverKey={setHoverKey} />
+    const legend = <SliceList rows={rows} hoverKey={hoverKey} onHoverKey={setHoverKey} />
     return (
       <div className="lc-card lc-col-stats lc-col-donut flex-1 min-w-[min(360px,100%)]">
         <div className="lc-card-title">
           <span className="lc-card-title-text">{t('tokens.title')}</span>
         </div>
-        {/* donut + legend row: the gap folds at a 320px card, below 240px the row wraps
-            and the ring centers over the full-width legend (all keyed to the lc-card container). */}
-        <div className="lc-donut-row flex items-center justify-start gap-3 min-w-0 @max-[320px]/lc-card:gap-2 @max-[240px]/lc-card:flex-wrap">
-          <Donut
-            segments={shown}
-            size={96}
-            centerTop={props.usage === null ? '—' : fmt(total)}
-            centerSub={t('tokens.total')}
-            hoverKey={hoverKey}
-            onHoverKey={setHoverKey}
-          />
-          <SliceList rows={rows} hoverKey={hoverKey} onHoverKey={setHoverKey} />
-        </div>
+        {compact ? <RingDetails title={t('tokens.title')} details={legend}>{ring}</RingDetails>
+          : <div className="lc-donut-row flex items-center justify-start gap-3 min-w-0 @max-[320px]/lc-card:gap-2 @max-[240px]/lc-card:flex-wrap">{ring}{legend}</div>}
       </div>
     )
   }

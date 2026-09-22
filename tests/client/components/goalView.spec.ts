@@ -27,10 +27,12 @@ test.each(['en', 'zh'] as const)('goal page follows lifecycle updates and recove
   }
   await m.update(h(View, { useProjection: () => ({ goal: { ...snapshot.goal, phase: 'blocked', blockedReason: { message: 'Await approval' } }, createdAt: 8640000000000001 }) }))
   assert.ok(text(m.container).includes('Await approval'))
-  assert.ok(text(m.container).includes('—'))
+  assert.equal(m.container.querySelector('details'), null)
+  await click(query(m.container, '.gp-goal-heading .gp-info-wrap button'))
+  assert.ok(text(query(document.body, '.gp-ring-details')).includes('—'))
   await m.update(h(View, { useProjection: () => ({ goal: { id: 'g2', objective: 'Unknown metadata', phase: 'paused' } }) }))
-  assert.equal(m.container.querySelectorAll('.gp-facts dd').length, 4)
-  assert.deepEqual([...m.container.querySelectorAll('.gp-facts dd')].map(el => el.textContent), ['—', '—', 'g2', '—'])
+  assert.equal(document.body.querySelectorAll('.gp-facts dd').length, 4)
+  assert.deepEqual([...document.body.querySelectorAll('.gp-facts dd')].map(el => el.textContent), ['—', '—', 'g2', '—'])
   await m.unmount()
 })
 

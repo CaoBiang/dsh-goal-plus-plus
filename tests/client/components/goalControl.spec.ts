@@ -23,6 +23,27 @@ function setup(get = async (): Promise<unknown> => reply()) {
 const View = makeGoalView(makeKit(), () => null)
 const props = (phase = 'active', revision = 1, roundsStarted = 0) => ({ sessionId: 's', useProjection: () => ({ goal: { ...goal, phase, revision }, roundsStarted }) })
 
+test('pending actions and revision refreshes preserve the controls without loading text', async () => {
+  const f = setup()
+  const m = await mount(h(View, props()))
+  const button = query<HTMLButtonElement>(m.container, '.gp-control button')
+  let finish!: (value: unknown) => void
+  f.goals.pause.mockImplementation(() => new Promise(done => { finish = done }))
+  await click(button)
+  assert.equal(button.textContent, 'Pause')
+  assert.equal(button.disabled, true)
+  let read!: (value: unknown) => void
+  f.goals.get.mockImplementation(() => new Promise(done => { read = done }))
+  await m.update(h(View, props('paused', 2)))
+  assert.equal(query(m.container, '.gp-control button'), button)
+  assert.equal(button.textContent, 'Start')
+  assert.equal(button.disabled, true)
+  assert.ok(!text(query(m.container, '.gp-goal-actions > .gp-control')).includes('Reading execution state'))
+  await act(async () => { finish(reply('disarmed', 2)); read(reply('disarmed', 2)) })
+  assert.equal(button.disabled, false)
+  await m.unmount(); f.ctx.dispose()
+})
+
 test.each(['en', 'zh'] as const)('controls pause and start with CAS and follow pushed state (%s)', async locale => {
   const f = setup()
   const kit = makeKit(locale)
@@ -64,10 +85,10 @@ test.each([null, {}, { ok: false }, { ok: true }, { ok: true, value: null }, rep
 ])('bad live data resolves to retryable state: %#', async value => {
   const f = setup(async () => value)
   const m = await mount(h(View, props()))
-  assert.ok(m.container.querySelector('[role="alert"]'))
+  assert.ok(m.container.querySelector('.gp-control [role="alert"]'))
   f.goals.get.mockResolvedValue(reply())
-  await click(query(m.container, '[role="alert"] button'))
-  assert.equal(m.container.querySelector('[role="alert"]'), null)
+  await click(query(m.container, '.gp-control [role="alert"] button'))
+  assert.equal(m.container.querySelector('.gp-control [role="alert"]'), null)
   await m.unmount(); f.ctx.dispose()
 })
 
@@ -77,7 +98,7 @@ test('rejected mutations can be retried without leaving controls pending', async
   const m = await mount(h(View, props()))
   for (let i = 0; i < 2; i++) {
     await click(query(m.container, '.gp-control > button'))
-    assert.ok(m.container.querySelector('[role="alert"]'))
+    assert.ok(m.container.querySelector('.gp-control [role="alert"]'))
     assert.equal(query<HTMLButtonElement>(m.container, '.gp-control > button').disabled, false)
   }
   await m.unmount(); f.ctx.dispose()
@@ -138,12 +159,12 @@ test('optional Remote face can arrive late, be absent, malformed, hostile, or re
 test('subscription and synchronous read failures remain retryable; timeout settles', async () => {
   const f = setup(() => { throw Error('sync') })
   const m = await mount(h(View, props()))
-  assert.ok(m.container.querySelector('[role="alert"]'))
+  assert.ok(m.container.querySelector('.gp-control [role="alert"]'))
   await m.unmount(); f.ctx.dispose()
   const broken = setup()
   Object.assign(broken.ctx, { on() { throw Error('subscription') } })
   const n = await mount(h(View, props()))
-  assert.ok(n.container.querySelector('[role="alert"]'))
+  assert.ok(n.container.querySelector('.gp-control [role="alert"]'))
   await n.unmount(); broken.ctx.dispose()
   vi.useFakeTimers()
   try {
@@ -187,7 +208,7 @@ test('late rejected reads after replacement or a newer event are ignored', async
   const old = reject
   f.goals.get.mockResolvedValue(reply())
   await act(async () => { f.event({ sessionId: 's' }); old(Error('stale')) })
-  assert.equal(m.container.querySelector('[role="alert"]'), null)
+  assert.equal(m.container.querySelector('.gp-control [role="alert"]'), null)
   f.goals.get.mockImplementation(() => new Promise((_resolve, fail) => { reject = fail }))
   await act(async () => { f.reset() })
   await m.unmount()

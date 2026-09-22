@@ -19,6 +19,7 @@ import type { ViewKit } from '../viewkit'
  * the circumference ≈ 2.3px on the 96px card ring, so this reads as ~1px).
  */
 const SEG_GAP = 0.5
+export const STATS_DONUT_SIZE = 96
 
 export interface DonutSegment {
   key: string

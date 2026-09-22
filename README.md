@@ -56,11 +56,23 @@ Track the goal first, then inspect the context supporting it:
 | **`/context` command** | A centered modal with the same composition and context browser, without leaving the chat. |
 | **Settings → Plugin configuration** | Per-user defaults: trend granularity & mode, File Activity sort. |
 
-Goal token usage includes provider-reported input, cache read/write, and output for requests explicitly attributed to the current goal, including retries. It excludes unrelated manual turns and previous goals. The context chart shows the estimated context composition at the final request of each retained round; selecting a bar shows that round's cumulative input and output. Total goal usage remains cumulative when older chart records are trimmed. No step, adaptive-scale, or delta controls are shown on Goal.
+Goal token usage includes provider-reported input, cache read/write, and output for requests explicitly attributed to the current goal, including retries. It excludes unrelated manual turns and previous goals. The context chart shows the estimated context composition at the final request of each retained round; hovering a bar shows its details in a tooltip. Total goal usage remains cumulative when older chart records are trimmed. No step, adaptive-scale, or delta controls are shown on Goal.
 
-The Goal subpage is read-only. Use the harness's `/goal` command in chat to manage a goal. **Active** describes the recorded lifecycle state, not whether automatic continuation is currently running. Admitted rounds are usage counters, not completion percentages. Missing goal capability leaves Context available. See [compatibility](docs/compatibility.md) for supported harness releases.
+**File changes** shows a compact file count and total added/removed lines. Select **View** to open the file list in a dialog, with 10 files per page. Counts cover retained successful goal-owned file operations; partial retention is marked explicitly.
 
-The state map highlights the current phase among Active, Paused, Blocked, and Complete; it does not invent a transition history. The round-usage ring compares started rounds with unused allowance, and its legend highlights slices by pointer or keyboard focus. The round strip groups large limits into at most 40 ranges; hover a range to see exact counts. Missing or inconsistent counts show an unavailable-data notice instead of a fabricated percentage.
+The Goal card provides **Pause / Start** controls. **Active** describes the recorded lifecycle state, not whether automatic continuation is currently running. Missing goal capability leaves Context available. See [compatibility](docs/compatibility.md) for supported harness releases.
+
+### Auto retry
+
+On **Goal++ → Goal → Current conversation goal**, enable **Auto retry** to show its settings and live status below the objective. Set the fixed interval and maximum attempts, then select **Save**. Turning it off collapses this section. Defaults: **off**, **30 seconds**, **3 attempts**. Enable before a goal round starts; a round whose attribution was not observed is never recovered retroactively.
+
+Recovery runs in the host even when the browser closes. It resumes the same live goal only after native request retries exhaust on a confirmed temporary model failure (transport, timeout, server, empty response or temporary rate limit). Authentication, quota, unknown/tool errors, storage failures and exhausted goal rounds do not trigger recovery. The waiting status shows a countdown and **Cancel retry and turn off** action. “Execution resumed” confirms the resume operation, not the success of the next model request.
+
+Attempts count actual plugin resume calls, not native retries, and do not reset after success or toggling the switch. Pause, native Stop, goal edits/replacement/manual resume/completion, new activity, disabling retry or unloading the plugin cancel pending recovery. Settings and counts are process-local; restarting the host never resumes an old retry. A failed recovery is shown explicitly and stops that flow.
+
+Build an installable package with `.\goalpp.ps1 -Action Package`, then install the resulting tarball with `dsh plugin --profile web add ./dist/dsh-goal-plus-plus-0.54.2.tgz`.
+
+The goal header shows its lifecycle state with a status light. Goal metadata is available from the adjacent info icon. Current context and total token usage use responsive rings with hover details; wide panels place them beside the per-round chart in a 1:1:2 layout.
 
 ## 🗂️ The Context Dashboard
 

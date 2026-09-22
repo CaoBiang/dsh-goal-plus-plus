@@ -4,7 +4,7 @@ import { test, vi } from 'vitest'
 import { makeGoalTokens } from '../../../src/client/components/goalTokens'
 import type { ClientCtx } from '../../../src/client/services'
 import { resetTimelineDetailStores } from '../../../src/client/timelineSource'
-import { click, hover, makeKit, mount, query, text, unhover, until } from '../helpers/kit'
+import { click, hover, keydown, makeKit, mount, query, text, unhover, until } from '../helpers/kit'
 
 const current = { system: 10, tools: 20, user: 30, inject: 0, skill: 0, assistant: 40, tool: 0, total: 100 }
 const usage = { goalId: 'g', round: 2, usage: { uncachedInputTokens: 200, cacheReadTokens: 20, cacheWriteTokens: 0, outputTokens: 30 },
@@ -26,6 +26,22 @@ test.each(['en', 'zh'] as const)('goal token cards reuse composition and fixed r
   await m.update(h(View, { goalId: 'g', useProjection: () => data }))
   assert.ok(text(m.container).includes(kit.t('goal.tokens')))
   assert.ok(text(m.container).includes('250'))
+  assert.ok(!text(m.container).includes(kit.t('goal.tokensHint')))
+  await hover(query(m.container, '.gp-info-wrap button'))
+  assert.ok(text(query(document.body, '.gp-ring-details')).includes(kit.t('goal.tokensHint')))
+  await keydown('Escape')
+  const currentCard = query(m.container, '[data-lc-current]')
+  const rings = [...m.container.querySelectorAll<HTMLElement>('.lc-donut')]
+  assert.equal(rings.length, 2)
+  assert.deepEqual(rings.map(ring => [ring.style.width, ring.style.height]), [['96px', '96px'], ['96px', '96px']])
+  assert.equal(currentCard.querySelector('.lc-stacked'), null)
+  assert.ok(text(currentCard).includes('11%'))
+  assert.ok(!text(currentCard).includes('890'))
+  await hover(query(currentCard, '.gp-ring-trigger'))
+  assert.ok(text(query(document.body, '.gp-ring-details')).includes('890'))
+  await hover(query(currentCard, '.lc-donut-seg'))
+  assert.ok(currentCard.querySelector('.lc-donut-seg-on'))
+  await unhover(query(currentCard, '.lc-donut'))
   assert.equal(m.container.querySelectorAll('.lc-bar').length, 2)
   assert.equal(m.container.querySelectorAll('.lc-gran').length, 0)
   const bar = query(m.container, '.lc-bar')
@@ -57,7 +73,7 @@ test('goal detail loading retries visibly and does not merge another goal histor
     assert.ok(text(m.container).includes(kit.t('goal.tokensLoading')))
     await until(() => text(m.container).includes(kit.t('goal.tokensRetry')), 'missing retry')
     fail = false
-    await click(query(m.container, 'button'))
+    await click(query(m.container, '.gp-trend-card .gp-action'))
     await until(() => m.container.querySelectorAll('.lc-bar').length === 2, 'missing rounds')
   } finally {
     await m.unmount()

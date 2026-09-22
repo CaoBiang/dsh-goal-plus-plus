@@ -90,6 +90,24 @@ describe.skipIf(reasons.length > 0)('compat matrix — real dsh sources per base
       assert.equal(source.includes("'goal/activation-changed'"), liveActivation)
     })
 
+    test('goal retry: native final-error, idle-stop, durability and modal seams', () => {
+      const loop = staging.dshShow(baseline.tag, 'packages/core/agent-loop/src/agent.ts')
+      for (const needle of ["'agent/request-error'", "'agent/error'", 'error.failure', "'turn/end'", 'whenIdle()',
+        'cancel(', 'this.phase.kind', "kind: 'idle'"]) assert.ok(loop.includes(needle), `${baseline.id}: ${needle}`)
+      const goal = staging.dshShow(baseline.tag, 'packages/goal/goal/src/index.ts')
+      for (const needle of ['get(agent: Agent)', 'disarm(agent: Agent)', 'resume(agent: Agent, ref: GoalRef)']) {
+        assert.ok(goal.includes(needle), `${baseline.id}: ${needle}`)
+      }
+      const driver = staging.dshShow(baseline.tag, 'packages/goal/goal-round-driver/src/index.ts')
+      assert.ok(driver.includes("'agent/error'")); assert.ok(driver.includes('disarm('))
+      const sessions = staging.dshShow(baseline.tag, 'packages/core/session/src/index.ts')
+      assert.ok(sessions.includes('flush('))
+      const modal = staging.dshShow(baseline.tag, 'packages/client/ui-primitives/src/Modal.tsx')
+      for (const needle of ['createPortal', 'document.body', 'closeLabel', 'onClose']) assert.ok(modal.includes(needle), needle)
+      const primitives = staging.dshShow(baseline.tag, 'packages/client/ui-primitives/src/index.ts')
+      assert.ok(primitives.includes('useAnchoredPosition'))
+    })
+
     test('host: all three projection values served through the wire', () => {
       assert.deepEqual(report.keys, ['contextActivity', 'contextHeaders', 'contextTimeline'])
     })
