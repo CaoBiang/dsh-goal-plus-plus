@@ -17,16 +17,20 @@ export function makeGoalRetry({ t }: ViewKit) {
     const [draft, setDraft] = useState(RETRY_DEFAULTS)
     const dirty = useRef(false)
     const [now, setNow] = useState(Date.now())
-    const current = useRef<AbortController>()
+    const current = useRef<{ controller: AbortController; action: RetryRequest['action'] }>()
     const mounted = useRef(true)
     const revisionRef = useRef(revision)
     revisionRef.current = revision
     const request = async (action: RetryRequest['action'], settings?: RetryRequest['settings']) => {
-      if (current.current !== undefined) return
+      if (current.current !== undefined) {
+        if (action === 'read' || current.current.action !== 'read') return
+        current.current.controller.abort()
+      }
       const controller = new AbortController()
       const requestRevision = revisionRef.current
-      current.current = controller
-      setBusy(true)
+      current.current = { controller, action }
+      const isCurrent = () => current.current?.controller === controller
+      if (action !== 'read') setBusy(true)
       const timeout = setTimeout(() => { controller.abort() }, 10_000)
       try {
         const response = await fetch(GOAL_RETRY_ROUTE, { method: 'POST', credentials: 'same-origin', signal: controller.signal,
@@ -34,23 +38,25 @@ export function makeGoalRetry({ t }: ViewKit) {
         const reply = retryRecord(await response.json())
         if (!response.ok || reply.ok !== true) throw new Error('Retry service unavailable')
         const value = retryViewSchema.parse(reply.value)
-        if (mounted.current && requestRevision === revisionRef.current) {
+        if (mounted.current && isCurrent() && requestRevision === revisionRef.current) {
           setView(value); setError(false)
           if (action === 'configure') dirty.current = false
           if (!dirty.current) setDraft({ enabled: value.enabled, intervalSeconds: value.intervalSeconds, maxRetries: value.maxRetries })
         }
-      } catch { if (mounted.current && requestRevision === revisionRef.current) setError(true) }
+      } catch { if (mounted.current && isCurrent() && requestRevision === revisionRef.current) setError(true) }
       finally {
         clearTimeout(timeout)
-        current.current = undefined
-        if (mounted.current) setBusy(false)
+        if (isCurrent()) {
+          current.current = undefined
+          if (mounted.current && action !== 'read') setBusy(false)
+        }
       }
     }
     useEffect(() => {
       mounted.current = true
       void request('read')
       const timer = setInterval(() => { setNow(Date.now()); void request('read') }, 1000)
-      return () => { mounted.current = false; clearInterval(timer); current.current?.abort() }
+      return () => { mounted.current = false; clearInterval(timer); current.current?.controller.abort() }
     }, [])
     const valid = retrySettingsSchema.safeParse(draft).success
     const details = <>
