@@ -1,0 +1,57 @@
+# Dependencies and package-manager state
+node_modules/
+.pnpm-store/
+.npm-cache/
+.npm/
+
+# Generated build and package outputs
+dist/
+build/
+out/
+lib/
+*.tgz
+
+# Test, coverage, and bundler caches
+coverage/
+.vitest/
+.vite/
+.turbo/
+*.tsbuildinfo
+
+# Generated source maps from build output
+*.js.map
+*.d.ts.map
+
+# Temporary files and local runner state
+.tmp/
+tmp/
+*.tmp
+*.temp
+*.pid
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local environment and secrets; keep checked-in examples visible
+.env
+.env.*
+!.env.example
+
+# Editor and operating-system files
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+
+# The version-probe tests intentionally contain package-shaped fixture trees.
+!tests/host/fixtures/
+!tests/host/fixtures/version/
+!tests/host/fixtures/version/**
+!tests/host/fixtures/version/**/node_modules/
+!tests/host/fixtures/version/**/node_modules/**
