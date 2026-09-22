@@ -353,6 +353,8 @@ export interface ContextTimelineDetail {
  * result payloads.
  */
 export interface FileOpRecord {
+  /** Explicit goal-round owner captured when the tool call starts. */
+  goalId?: string
   seq: number
   /** The op's file; for a pathless search the searched PATTERN (`pattern: true`). */
   path: string

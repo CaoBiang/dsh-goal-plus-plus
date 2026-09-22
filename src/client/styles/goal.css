@@ -21,6 +21,12 @@
 .gp-objective { font-size: 16px; }
 .gp-control { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
 .gp-control button { border: 1px solid var(--dsw-alias-border-l2); }
+.gp-file-list { list-style: none; padding: 0; margin: 12px 0; }
+.gp-file-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; padding: 8px 0; border-bottom: 1px solid var(--dsw-alias-border-l2); }
+.gp-file-path { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.gp-file-delta { display: inline-flex; gap: 12px; font-variant-numeric: tabular-nums; }
+.gp-file-added { color: var(--color-teal-500); }
+.gp-file-removed { color: var(--color-red-500); }
 .gp-blocked { border-left: 3px solid var(--dsw-alias-state-error-primary); padding: 8px 12px; background: var(--dsw-alias-bg-layer-2); }
 .gp-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin: 24px 0; }
 .gp-facts dt { color: var(--dsw-alias-label-secondary); margin-bottom: 6px; }

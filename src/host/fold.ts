@@ -186,7 +186,7 @@ export interface TimelineState {
    * duration into `timing.toolsMs` when the result arrives; the raw arguments
    * feed the file-op derivation (shared/fileOps.ts) at that same moment.
    */
-  callNames: Record<string, { name: string; start: number; argsRaw?: string }>
+  callNames: Record<string, { name: string; start: number; argsRaw?: string; goalId?: string }>
   /**
    * Seq list of the surface nodes the next replacement will shadow, armed by
    * the metering event (`compaction/summary` | `compaction/prune`) and
@@ -379,8 +379,8 @@ function argsRawOf(value: unknown): string | undefined {
 }
 
 /** Append op records to the fold-derived log (the trim lives in trimState, with the other collections). */
-function pushFileOps(st: TimelineState, ops: FileOpRecord[]): void {
-  for (const op of ops) st.fileOps.push(op)
+function pushFileOps(st: TimelineState, ops: FileOpRecord[], goalId: string | undefined): void {
+  for (const op of ops) st.fileOps.push(goalId === undefined ? op : { ...op, goalId })
 }
 
 /**
@@ -939,6 +939,7 @@ function applyContextTimeline(state: TimelineState, event: TimelineEvent, bounds
           s.callNames[data.callId] = {
             name: data.name,
             start: event.time,
+            ...(s.goalUsage?.active === true ? { goalId: s.goalUsage.goalId } : {}),
             ...(argsRaw !== undefined ? { argsRaw } : {}),
           }
         }
@@ -1121,7 +1122,7 @@ function applyContextTimeline(state: TimelineState, event: TimelineEvent, bounds
             meta: data?.meta,
             err: Boolean(data?.error) || firstBlock?.isError === true,
           })
-          pushFileOps(s, ops)
+          pushFileOps(s, ops, pendingEntry.goalId)
         }
         if (buffered !== undefined && buffered.length > 0) {
           // The run_code root settles: its nested ops land with `parent` = this
@@ -1131,7 +1132,7 @@ function applyContextTimeline(state: TimelineState, event: TimelineEvent, bounds
             ...op,
             parent: event.seq,
             ...(typeof program === 'string' && program !== '' ? { program } : {}),
-          })))
+          })), pendingEntry?.goalId)
           const kept: Record<string, FileOpRecord[]> = {}
           for (const k in s.pendingCodeOps) {
             if (k !== srcId && k !== blockId) kept[k] = s.pendingCodeOps[k]

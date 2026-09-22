@@ -95,6 +95,7 @@ const contextEventSchema = z.object({
 
 /** The fold-derived file-operation record (shared/types.ts FileOpRecord). */
 const fileOpSchema = z.object({
+  goalId: z.string().min(1).optional(),
   seq: z.number().int().nonnegative(),
   path: z.string(),
   kind: z.enum(['read', 'write', 'search']),
@@ -281,7 +282,9 @@ const timelineStateSchema = z.object({
     decode: z.object({ reasoning: z.number(), text: z.number(), toolarg: z.number() }).strict().optional(),
     block: z.object({ kind: z.enum(['reasoning', 'text', 'toolarg']), since: z.number() }).strict().optional(),
   }).strict().optional(),
-  callNames: z.record(z.string(), z.object({ name: z.string(), start: z.number(), argsRaw: z.string().optional() }).strict()),
+  callNames: z.record(z.string(), z.object({
+    name: z.string(), start: z.number(), argsRaw: z.string().optional(), goalId: z.string().min(1).optional(),
+  }).strict()),
   pendingShadowedSeqs: z.array(z.number()).optional(),
   pendingShadowEventSeq: z.number().optional(),
   detailRev: z.number().int().nonnegative().optional(),
@@ -416,7 +419,8 @@ export function createContextTimelineDefinition(config: Config, slim: () => bool
     // the `contextTimeline` row too, rebuilding idle sessions' rows instead
     // of orphaning the key.
     // 21: explicit goal-round attribution and cumulative goal token accounting.
-    stateVersion: 21,
+    // 22: file operations retain their admitted goal-round owner, including pending calls.
+    stateVersion: 22,
   }
   return definition
 }
