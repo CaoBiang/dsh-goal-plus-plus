@@ -22,6 +22,8 @@ export function goalTokensOf(value: unknown, goalId: string): GoalUsage | null {
     const anchor = object(raw.anchor)
     return {
       goalId, round: number(raw.round),
+      ...(typeof raw.executionMs === 'number' && Number.isSafeInteger(raw.executionMs) && raw.executionMs >= 0
+        ? { executionMs: raw.executionMs } : {}),
       usage: Object.fromEntries(buckets.map(key => [key, number(usage[key])])) as unknown as GoalUsage['usage'],
       composition: composition(raw.composition),
       current: raw.current == null ? null : composition(raw.current),

@@ -11,6 +11,51 @@ const create = (id = 'g'): TimelineEvent => event('goal/change', { operation: 'c
 const admitted = (round: number, goalId = 'g'): TimelineEvent => ({ ...event('user/message', {
   content: [{ type: 'text', text: 'Continue this goal' }], source: { kind: 'goal', goalId, revision: 1, round } }), surfaceOp: 'append' })
 
+test('goal execution time accumulates only admitted turns and excludes idle gaps', () => {
+  const def = timelineDef({}, true)
+  let state = def.init()
+  const feed = (e: TimelineEvent, time: number): void => {
+    state = def.apply(state, { ...e, time })
+    def.stateSchema.parse(state)
+    def.wire.viewSchema.parse(def.wire.view(state))
+    assert.notEqual(snapshotJson(state), undefined)
+  }
+  feed(create(), 0)
+  feed(event('turn/start', { turn: 1 }), 1000)
+  feed(admitted(1), 1100)
+  feed(event('turn/end', { turn: 1 }), 5000)
+  assert.equal(def.wire.view(state).goalUsage!.executionMs, 4000)
+  feed(event('turn/start', { turn: 2 }), 10000)
+  feed(userMessage(3, [{ type: 'text', text: 'manual' }]), 11000)
+  feed(event('turn/end', { turn: 2 }), 15000)
+  feed(event('goal/change', { operation: 'pause', goal: { id: 'g' } }), 16000)
+  feed(event('goal/change', { operation: 'resume', goal: { id: 'g' } }), 100000)
+  feed(event('turn/start', { turn: 3 }), 101000)
+  feed(admitted(2), 102000)
+  assert.equal(def.wire.view(state).goalUsage!.executionMs, 5000)
+  feed(event('turn/end', { turn: 3 }), 105000)
+  feed(event('turn/end', { turn: 3 }), 106000)
+  assert.equal(def.wire.view(state).goalUsage!.executionMs, 8000)
+  feed(create('other'), 200000)
+  assert.equal(def.wire.view(state).goalUsage!.executionMs, 0)
+})
+
+test('execution clock rejects malformed and reversed timestamps and unpaired ends', () => {
+  const before = createTimelineState()
+  const after = { ...before }
+  let state = applyGoalUsage(undefined, create(), before, after, 2)!
+  const feed = (e: TimelineEvent): void => { state = applyGoalUsage(state, e, before, after, 2)! }
+  feed({ ...event('turn/start', { turn: 1 }), time: NaN })
+  feed(admitted(1))
+  assert.equal(state.executionMs, 0)
+  feed({ ...event('assistant/message', { turn: 1, step: 1 }), time: 50 })
+  assert.equal(state.executionClock, 100)
+  feed({ ...event('assistant/message', { turn: 1, step: 1 }), time: NaN })
+  assert.equal(state.executionMs, 0)
+  feed({ ...event('turn/end', { turn: 2 }), time: 900 })
+  assert.equal(state.executionMs, 0)
+})
+
 test('goal accounting follows explicit attribution, retries, retained rounds, and goal lifecycle', () => {
   const def = timelineDef({ maxKeptTurns: 1 }, true)
   let state = def.init()

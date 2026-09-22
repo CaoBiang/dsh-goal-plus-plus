@@ -623,6 +623,8 @@ export interface RequestRecord {
 }
 
 export interface GoalUsage {
+  /** Observed execution milliseconds inside explicitly admitted goal turns. */
+  executionMs?: number
   goalId: string
   round: number
   usage: TokenUsage

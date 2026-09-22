@@ -132,12 +132,14 @@ const goalTokenSchema = z.object({
   cacheReadTokens: z.number().int().nonnegative(), cacheWriteTokens: z.number().int().nonnegative(),
 }).strict()
 const goalUsageSchema = z.object({
+  executionMs: z.number().int().nonnegative().optional(),
   goalId: z.string().min(1), round: z.number().int().nonnegative(), usage: goalTokenSchema, composition: currentSchema,
   current: currentSchema.nullable(), contextWindow: z.number().nullable(),
   roundInput: z.number().int().nonnegative(), roundOutput: z.number().int().nonnegative(),
   anchor: z.object({ prompt: z.number().int().nonnegative(), total: z.number().int().nonnegative() }).strict().nullable(),
 }).strict()
 const goalUsageStateSchema = goalUsageSchema.extend({
+  executionMs: z.number().int().nonnegative(), executionClock: z.number().int().nonnegative().nullable(),
   turn: z.number().int().nonnegative().nullable(), active: z.boolean(), rounds: z.array(requestRecordSchema),
   lastSample: z.object({ turn: z.number().int().nonnegative(), step: z.number().int().nonnegative(),
     usage: goalTokenSchema, composition: currentSchema }).strict().nullable(),
@@ -420,7 +422,8 @@ export function createContextTimelineDefinition(config: Config, slim: () => bool
     // of orphaning the key.
     // 21: explicit goal-round attribution and cumulative goal token accounting.
     // 22: file operations retain their admitted goal-round owner, including pending calls.
-    stateVersion: 22,
+    // 23: reconstruct goal execution time from admitted turn lifecycles.
+    stateVersion: 23,
   }
   return definition
 }

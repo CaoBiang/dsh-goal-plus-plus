@@ -8,6 +8,8 @@ const zeroUsage = (): TokenUsage => ({ uncachedInputTokens: 0, outputTokens: 0, 
 const zeroComposition = (): Composition => ({ system: 0, tools: 0, user: 0, inject: 0, skill: 0, assistant: 0, tool: 0, total: 0 })
 
 export interface GoalUsageState extends GoalUsage {
+  executionMs: number
+  executionClock: number | null
   turn: number | null
   active: boolean
   rounds: RequestRecord[]
@@ -57,12 +59,15 @@ export function applyGoalUsage(
     const goal = record(data.goal)
     if (data.operation === 'clear' && previous?.goalId === record(data.cleared).id) return undefined
     if (data.operation !== 'create' || typeof goal.id !== 'string' || goal.id === '' || previous?.goalId === goal.id) return previous
-    return { goalId: goal.id, round: 0, usage: zeroUsage(), composition: zeroComposition(), current: null,
+    return { goalId: goal.id, executionMs: 0, executionClock: null, round: 0,
+      usage: zeroUsage(), composition: zeroComposition(), current: null,
       contextWindow: null, roundInput: 0, roundOutput: 0, anchor: null, turn: null, active: false, rounds: [], lastSample: null }
   }
   if (previous === undefined) return previous
-  if (event.type === 'turn/start' && integer(data.turn)) return { ...previous, turn: data.turn, active: false, lastSample: null }
-  if (event.type === 'turn/end') return { ...previous, active: false, turn: null, lastSample: null }
+  if (event.type === 'turn/start' && integer(data.turn)) return { ...previous, turn: data.turn, active: false, lastSample: null,
+    executionClock: integer(event.time) ? event.time : null }
+  if (event.type === 'turn/end') return { ...advanceExecution(previous, data.turn === previous.turn ? event.time : undefined),
+    active: false, turn: null, lastSample: null, executionClock: null }
   let state = previous
   if (event.type === 'user/message' && after !== before) {
     const source = record(data.source)
@@ -71,6 +76,7 @@ export function applyGoalUsage(
     }
   }
   if (!state.active) return state
+  if (after !== before) state = advanceExecution(state, event.time)
   if (event.type === 'llm/retry-started') return state.lastSample?.turn === data.turn && state.lastSample?.step === data.step
     ? { ...state, lastSample: null } : state
   const settlement = event.type === 'assistant/message' || event.type === 'assistant/attempt'
@@ -110,7 +116,17 @@ export function applyGoalUsage(
 
 /** The head stays small; per-round records travel through the existing detail channel. */
 export function goalUsageView(state: GoalUsageState): GoalUsage {
-  return { goalId: state.goalId, round: state.round, usage: { ...state.usage }, composition: { ...state.composition },
+  return { goalId: state.goalId, executionMs: state.executionMs, round: state.round,
+    usage: { ...state.usage }, composition: { ...state.composition },
     current: state.current === null ? null : { ...state.current }, contextWindow: state.contextWindow,
     roundInput: state.roundInput, roundOutput: state.roundOutput, anchor: state.anchor === null ? null : { ...state.anchor } }
+}
+
+/** Advance only from observed execution events; never extrapolate across idle time or restarts. */
+function advanceExecution(state: GoalUsageState, time: unknown): GoalUsageState {
+  if (!state.active || !integer(time)) return state
+  const clock = state.executionClock
+  if (clock !== null && time < clock) return state
+  return { ...state, executionClock: time,
+    executionMs: Math.min(Number.MAX_SAFE_INTEGER, state.executionMs + (clock === null ? 0 : time - clock)) }
 }

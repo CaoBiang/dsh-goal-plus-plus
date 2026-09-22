@@ -3,6 +3,10 @@ import { test } from 'vitest'
 import { goalFieldsOf, goalRoundsOf, goalTokensOf } from '../../src/client/goalTokens'
 
 test('goal token payloads isolate goals and sanitize hostile accounting', () => {
+  for (const executionMs of [undefined, null, '10', NaN, Infinity, -1, 1.5]) {
+    assert.equal(goalTokensOf({ goalId: 'g', executionMs }, 'g')?.executionMs, undefined)
+  }
+  assert.equal(goalTokensOf({ goalId: 'g', executionMs: 1234 }, 'g')?.executionMs, 1234)
   const hostile = new Proxy({}, { get() { throw new Error('bad') } })
   for (const value of [undefined, null, 1, [], {}, hostile, { goalId: 'other' }]) assert.equal(goalTokensOf(value, 'g'), null)
   const empty = goalTokensOf({ goalId: 'g' }, 'g')!
