@@ -24,6 +24,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { createContextActivityDefinition } from './activity'
 import { createToolAttribution } from './attribution'
 import { watchBalanceChannel } from './balance'
+import { watchGoalRetry } from './goalRetry'
 import { watchActivityBackfill } from './backfill'
 import { Config, resolveBounds } from './config'
 import { watchDetailChannel } from './detail'
@@ -76,6 +77,7 @@ export function apply(ctx: Context, config: Config): void {
   // for any pre-step message that would persist unidentified — the harness's
   // load path refuses such events wholesale, permanently bricking the session.
   watchStepIdentity(ctx)
+  watchGoalRetry(ctx)
   // The split wire generation (detail.ts): the detail channel arms whenever
   // the connection/sessions/webServer services compose (load order never
   // assumed), and the unit's view reads the gate per serve — slim while the
