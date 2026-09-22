@@ -17,6 +17,16 @@ The automated seam matrix runs for every row on every `pnpm test`. The disposabl
 
 Releases older than `0.1.2-rc.1` — the `0.1.1` line and the `0.1.2-alpha.*` previews — were supported and verified through `dsh-goal-plus-plus@0.41.x` and are no longer in the support matrix.
 
+## Goal observation
+
+The **Goal++** conversation tab and optional sidebar panel contain **Goal** and **Context** subpages. Goal is the default; reply context jumps select Context directly, and `/context` still opens the dedicated modal. The existing conversation view ID and sidebar kind are retained so saved navigation remains valid.
+
+The Goal subpage subscribes to the standard `goal` projection without introducing a host service, polling, or a runtime dependency on the goal package. The supported baseline sources all expose the same nested `GoalProjection` shape: `goal` (identity, revision, objective, phase, optional blocker, round cap), `roundsStarted`, `createdAt`, and `updatedAt`. A source probe in the baseline matrix checks these fields against each actual harness tag.
+
+An absent value (`undefined`) means capability unavailable or still synchronizing; `null` means no current goal (before creation or after clearing). Malformed payloads show an unavailable-data notice and recover on a valid pushed update. Unknown numeric metadata is displayed as a dash. The durable projection does not carry process-local activation: **Active** must not be interpreted as proof that automatic continuation is running. Round counts are not completion percentages. Context remains usable in all these cases.
+
+The state map, round-usage ring, and grouped round strip derive only from this current snapshot. They show neither inferred state history nor per-round completion. Inconsistent counts suppress the ratio charts, and the strip is bounded to 40 ranges even for a very large host cap.
+
 ## Baseline gate
 
 The declared floor is enforced at runtime, not only documented. At startup the host resolves the running harness's version — first from the module tree the plugin is bound to, then from the `$DSH_HOME/profiles/node_modules` mirror — and compares it against `0.1.2-rc.1` (channel order: release > rc > beta > alpha):
@@ -87,3 +97,5 @@ To force a full refold of an existing session sooner, delete its cached projecti
 ```bash
 rm ~/.dsh/storages/session_projcache/sessions/<session-id>.json
 ```
+
+Goal token accounting follows durable `goal/change` identity and admitted `user/message.source` goal IDs and round numbers. It uses the same last-sample replacement and retry boundary semantics as the harness token meter. Ordinary untagged turns are excluded. Projection state version 21 refolds existing logs to reconstruct goal usage; bounded per-round records use the existing detail channel, while cumulative totals remain in the head. Missing goal attribution produces an explicit unavailable state rather than session-wide usage.

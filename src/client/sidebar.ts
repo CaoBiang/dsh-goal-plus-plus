@@ -1,12 +1,12 @@
 /**
- * The right Sidebar's Context tab (dsh 0.1.5-rc.1+).
+ * The right Sidebar's Goal++ tab (dsh 0.1.5-rc.1+).
  *
- * The tab reuses the Context conversation-view component VERBATIM: the
+ * The tab reuses the Goal++ conversation-view component: the
  * `sidebar.right.pane.tab` seat is session-scoped and delivers the same
  * framework standard kit (`sessionId`, `useProjection`, `useChat`, the locale
  * `t` seat) the `conversation.view` seat does, so the panel and the tab are
  * one component with one data path. The tab type contributes a guide entry, so
- * the sidebar's guide page offers "Context" and picking it opens the panel —
+ * the sidebar's guide page offers "Goal++" and picking it opens the panel —
  * the product's own path, exactly as the shipped Files type does: a capsule of
  * glyph, title, and description line, plus the chip-title seat that puts the
  * same glyph beside the label once the tab is open (`icon.tsx`).
@@ -41,10 +41,10 @@ export const SIDEBAR_CONTEXT_KIND = 'dsh-goal-plus-plus'
 const GUIDE_ORDER = 20
 
 /**
- * Register the Context tab type, its body, and its chip title on the right
+ * Register the Goal++ tab type, its body, and its chip title on the right
  * Sidebar, if — and only if — this harness serves the sidebar tab registry.
  * @param ctx - client root context carrying `slots` and the locale service.
- * @param view - the Context view component factory result (the same one the
+ * @param view - the plugin view component factory result (the same one the
  *   conversation tab mounts).
  * @param t - the plugin-namespace translate; the label thunks read the active
  *   locale at call time, so a language switch relabels the guide entry.
@@ -75,10 +75,10 @@ export function watchSidebarContextTab(
       own(tabs.register({
         id: SIDEBAR_CONTEXT_ID,
         kind: SIDEBAR_CONTEXT_KIND,
-        title: () => t('tab'),
+        title: () => t('plugin.tab'),
         guide: [{
           order: GUIDE_ORDER,
-          title: () => t('tab'),
+          title: () => t('plugin.tab'),
           description: () => t('sidebar.guideDescription'),
           icon: ContextIcon,
         }],

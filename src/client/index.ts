@@ -1,10 +1,9 @@
 /**
  * dsh-goal-plus-plus — Client half (installed package bundle entry).
  *
- * Registers a "上下文/Context" tab in the conversation view ring
- * (`conversation.view` slot, beside Chat/Trajectory) and renders the
- * context-composition timeline: current makeup, per-request stacked-bar
- * history, context events, and the live message list.
+ * Registers Goal++ in the conversation view ring and optional sidebar,
+ * with Goal and Context subpages. The goal page observes the native durable
+ * projection; the context page retains its timeline and message browser.
  *
  * Since v0.9 the tab rides the harness's session-projection pipeline
  * (`contextTimeline` projection key), read from the framework standard kit
@@ -33,6 +32,7 @@ import { modalStoreOf } from './modalStore'
 import type { ClientCtx } from './services'
 import { createContextSettings, type SettingsField, type SettingsScopeBinderFace } from './settings'
 import { makeContextView } from './components/contextView'
+import { makePluginView } from './components/pluginView'
 import { makeContextJumpButton } from './components/contextJump'
 import { watchHistoryFaces } from './historyPage'
 import { watchPlacement } from './placement'
@@ -47,6 +47,7 @@ import { makeViewKit } from './viewkit'
 // then the per-component sheets in their original section order.
 import './styles/tailwind.css'
 import './styles/base.css'
+import './styles/goal.css'
 import './styles/stats.css'
 import './styles/jump.css'
 import './styles/settings.css'
@@ -84,6 +85,7 @@ function apply(ctx: ClientCtx): void {
   watchHistoryFaces(ctx)
   const settings = createContextSettings()
   const ContextView = makeContextView(ctx, kit, settings)
+  const PluginView = makePluginView(kit, ContextView, ctx)
 
   // Placement: the per-user `defaultPlacement` preference picks which
   // registration carries the view — the conversation tab, the right Sidebar
@@ -95,11 +97,11 @@ function apply(ctx: ClientCtx): void {
       return ctx.slots.register(
         // order 20 renders right of Chat (0) and Trajectory (10); the locale
         // namespace put the framework `t` seat on the component's props too.
-        { name: 'conversation.view', id: 'context', order: 20, locale: NS, label: () => t('tab') },
-        props => h(ContextView, props),
+        { name: 'conversation.view', id: 'context', order: 20, locale: NS, label: () => t('plugin.tab') },
+        props => h(PluginView, props),
       )
     }),
-    sidebar: () => watchSidebarContextTab(ctx, ContextView, t, NS),
+    sidebar: () => watchSidebarContextTab(ctx, PluginView, t, NS),
   }), 'dsh-goal-plus-plus: placement')
 
   // Chat → Context jump: an icon in each finalized reply's action row that

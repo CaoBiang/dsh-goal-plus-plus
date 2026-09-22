@@ -1,3 +1,4 @@
+import { goalFieldsOf } from './goalTokens'
 /**
  * The timeline source behind the Context tab and the /context modal —
  * reconciles the two `contextTimeline` wire generations into the single
@@ -53,6 +54,7 @@ export function detailOf(value: unknown): ContextTimelineDetail | null {
   const head = timelineOf(data.head)
   return {
     rev: data.rev,
+    ...goalFieldsOf(data),
     ...(head !== null ? { head } : {}),
     requests: objectsOf(data.requests),
     events: objectsOf(data.events),
@@ -303,6 +305,7 @@ export function useTimelineSource(ctx: ClientCtx, props: SessionStandardProps): 
       ? head
       : {
         ...head,
+        ...goalFieldsOf(detail as unknown as Record<string, unknown>),
         requests: detail.requests,
         events: detail.events,
         nodes: detail.nodes,

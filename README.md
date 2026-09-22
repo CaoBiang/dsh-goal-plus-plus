@@ -8,12 +8,13 @@
 
 **Goal++ is a [DeepSeek Harness plugin](https://www.deepseek.com/harness/) for goal-oriented agent insight and management.**
 
-Goal++ currently carries forward the context lifecycle foundation from the upstream [`dsh-context`](https://github.com/bowenliang123/dsh-context) project. The inherited context surfaces are the base for the goal-mode capabilities that will be added here.
+Goal++ brings the current conversation's goal and its supporting context into one workspace. Open **Goal++** in a conversation or the right sidebar, then choose **Goal** (the default) or **Context**. The context tools build on the upstream [`dsh-context`](https://github.com/bowenliang123/dsh-context) project.
 
-[`dsh-goal-plus-plus`](https://www.npmjs.com/package/dsh-goal-plus-plus) provides the context foundation used by Goal++:
+[`dsh-goal-plus-plus`](https://www.npmjs.com/package/dsh-goal-plus-plus) provides:
+- **Goal subpage** — a live goal dashboard with token usage, current-round context, a per-round context chart, a state map, and round counters. Shows the objective, blocker, and expandable details, and distinguishes an unset goal from unavailable or unreadable data.
 - **Context Dashboard** — the cross-session overview above Settings on the sidebar foot: KPI band, activity heatmap, aggregate composition ring, and filterable session cards that jump straight into any session.
-- **Context tab** — an UI context dashboard for DeepSeek Harness's context stats, composition, trend, events, and messages.
-- **Context panel** — the same dashboard as a right-sidebar tab (dsh 0.1.5-rc.1+; verified through 0.1.6-alpha.2): pick **Context** on the sidebar's guide page and the panel opens beside the chat.
+- **Context subpage** — the existing dashboard for context stats, composition, trend, events, and messages.
+- **Goal++ panel** — both subpages in the right sidebar (dsh 0.1.5-rc.1+; verified through 0.1.6-alpha.2): pick **Goal++** on the sidebar's guide page.
 - **`/context` command** — the slash command shows the context model for current context composition and recent context evolution.
 
 ## Install / Update
@@ -45,14 +46,21 @@ For non-interactive use:
 
 ## Use it
 
-Four surfaces, one story — what your agent is carrying, how it got there, and what it did with it:
+Track the goal first, then inspect the context supporting it:
 
 | Where | What you get |
 | --- | --- |
 | **Context Dashboard** | Every session at a glance: usage, cost, cache hit, daily activity, and per-session context profiles — filtered by range, day, group, or search, one click to jump in. |
-| **Context tab** | The full dashboard: stats, composition, per-request trend, events, file activity, and the agent network — in every session. |
+| **Goal++ → Goal** | The current conversation's objective, recorded status, block reason, rounds, and timestamps; updates with the host. |
+| **Goal++ → Context** | The full dashboard: stats, composition, per-request trend, events, file activity, and the agent network — in every session. |
 | **`/context` command** | A centered modal with the same composition and context browser, without leaving the chat. |
 | **Settings → Plugin configuration** | Per-user defaults: trend granularity & mode, File Activity sort. |
+
+Goal token usage includes provider-reported input, cache read/write, and output for requests explicitly attributed to the current goal, including retries. It excludes unrelated manual turns and previous goals. The context chart shows the estimated context composition at the final request of each retained round; selecting a bar shows that round's cumulative input and output. Total goal usage remains cumulative when older chart records are trimmed. No step, adaptive-scale, or delta controls are shown on Goal.
+
+The Goal subpage is read-only. Use the harness's `/goal` command in chat to manage a goal. **Active** describes the recorded lifecycle state, not whether automatic continuation is currently running. Admitted rounds are usage counters, not completion percentages. Missing goal capability leaves Context available. See [compatibility](docs/compatibility.md) for supported harness releases.
+
+The state map highlights the current phase among Active, Paused, Blocked, and Complete; it does not invent a transition history. The round-usage ring compares started rounds with unused allowance, and its legend highlights slices by pointer or keyboard focus. The round strip groups large limits into at most 40 ranges; hover a range to see exact counts. Missing or inconsistent counts show an unavailable-data notice instead of a fabricated percentage.
 
 ## 🗂️ The Context Dashboard
 
@@ -70,7 +78,7 @@ Click **Context Dashboard / 上下文仪表盘** at the bottom-left of the sideb
 
 ## 📊 The Context tab
 
-Open any session and click the **Context / 上下文** tab:
+Open any session, click **Goal++**, then choose **Context / 上下文**:
 
 ![Context panel overview](https://raw.githubusercontent.com/CaoBiang/dsh-goal-plus-plus/main/docs/context-overview.png)
 

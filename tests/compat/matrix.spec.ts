@@ -64,6 +64,22 @@ describe.skipIf(reasons.length > 0)('compat matrix — real dsh sources per base
       assert.equal(report.registered, true)
     })
 
+    test('client: the native goal projection retains the observed durable fields', () => {
+      const types = staging.dshShow(baseline.tag, 'packages/goal/goal/src/types.ts')
+      for (const field of ['goal: GoalSnapshot', 'roundsStarted: number', 'createdAt: number', 'updatedAt: number',
+        'objective: string', 'phase: GoalPhase', 'maxGoalRounds: number', 'revision: number',
+        'blockedReason?: GoalBlockReason', 'goal: GoalProjection | null']) {
+        assert.ok(types.includes(field), `${baseline.id}: missing goal field ${field}`)
+      }
+    })
+
+    test('host: goal accounting attribution exists in each durable vocabulary', () => {
+      const domain = staging.dshShow(baseline.tag, 'packages/goal/goal/src/domain.ts')
+      for (const field of ["kind: 'goal'", 'goalId: GoalId', 'round: number', "'goal/change'"]) {
+        assert.ok(domain.includes(field), `${baseline.id}: missing goal attribution ${field}`)
+      }
+    })
+
     test('host: all three projection values served through the wire', () => {
       assert.deepEqual(report.keys, ['contextActivity', 'contextHeaders', 'contextTimeline'])
     })

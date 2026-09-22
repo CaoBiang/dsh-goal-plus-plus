@@ -1,3 +1,4 @@
+import { goalFieldsOf } from './goalTokens'
 /**
  * Client-side harness boundary — the exact API surface this plugin consumes
  * from the harness web half, plus the sanitizers that re-prove every
@@ -396,6 +397,7 @@ export function timelineOf(value: unknown): ContextTimeline | null {
   const last = lastOf(data.last)
   const safe: ContextTimeline = {
     ok: true,
+    ...goalFieldsOf(data),
     ...(unsupported !== null ? { unsupported } : {}),
     ...(typeof data.model === 'string' ? { model: data.model } : {}),
     ...(typeof data.provider === 'string' ? { provider: data.provider } : {}),

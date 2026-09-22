@@ -9,18 +9,29 @@
 import { asRecord, type ClientCtx } from './services'
 import { SIDEBAR_CONTEXT_KIND } from './sidebar'
 
-const pendingFocus = new Map<string, number>()
+const pendingFocus = new Map<string, number | null>()
+const pages = new Map<string, 'goal' | 'context'>()
+
+export function goalPageOf(sessionId: string): 'goal' | 'context' {
+  return pages.get(sessionId) ?? 'goal'
+}
+
+export function selectGoalPage(sessionId: string, page: 'goal' | 'context'): void {
+  pages.set(sessionId, page)
+  for (const listener of focusListeners) listener()
+}
 
 /** The mounted Context views re-pinning on later records (repeat jumps). */
 const focusListeners = new Set<() => void>()
 
 /**
  * Record the Context step (request seq) to reveal for `sessionId` — replaces
- * any unconsumed request and wakes the mounted views.
+ * any unconsumed request and wakes the mounted views. A null seq selects
+ * the Context subpage without pinning a turn.
  */
-export function requestContextFocus(sessionId: string, seq: number): void {
+export function requestContextFocus(sessionId: string, seq: number | null): void {
   pendingFocus.set(sessionId, seq)
-  for (const listener of focusListeners) listener()
+  selectGoalPage(sessionId, 'context')
 }
 
 /**

@@ -67,12 +67,12 @@ export function makeContextJumpButton(ctx: ClientCtx, kit: ViewKit): (props: Con
     const seq = seqOfMessageId(nodes, messageId)
     const jump = (): void => {
       const sessionId = props.sessionId
-      if (seq !== null && typeof sessionId === 'string' && sessionId !== '') {
+      if (typeof sessionId === 'string' && sessionId !== '') {
         requestContextFocus(sessionId, seq)
       }
       // The sidebar expands over the chat, keeping the clicked reply in view;
       // a harness or placement without that tab keeps the tab activation.
-      if (!openContextSidebar(ctx)) activateContextTab(t('tab'))
+      if (!openContextSidebar(ctx)) activateContextTab(t('plugin.tab'))
     }
     return (
       <Tooltip label={t('jump.title')} side="bottom">
